@@ -1,89 +1,76 @@
-# 🛡️ TobaPatrol — Smart Civic Reporting & Public Service Accountability Platform
+# TobaPatrol — Smart Civic Reporting & Public Service Accountability Platform
 
-![TobaPatrol Showcase Banner](./Thumbnail_TobaPatrol_NAPOSO3M.png)
-
-> **Diajukan oleh Tim NAPOSO3M** — Kompetisi **Web In Action (WIA) • Multimedia In Action (MIA) 2026**  
+> **Tim Pengembang:** NAPOSO3M  
+> **Kompetisi:** Web In Action (WIA) — Multimedia In Action (MIA) 2026  
 > **Tema Utama:** *From Visionaries to Architects of Change*  
 > **Subtema:** *Civic Reporting & Accountability* & *Public Service Tracking*
 
 ---
 
-## 📌 1. Judul Project & Deskripsi Singkat
+## 1. Judul Project & Deskripsi Singkat
 
 **TobaPatrol** adalah platform pelaporan masyarakat (*Civic Reporting & Accountability*) dan pelacakan tindak lanjut layanan publik berbasis **Autonomous Web AI Agent** untuk kawasan Kabupaten Toba (16 Kecamatan). Aplikasi ini menghubungkan **Masyarakat, Admin Dinas, dan Petugas Lapangan** dalam satu ekosistem terpadu untuk mengotomatisasi disposisi instansi, menghitung *Skor Urgensi* keselamatan (1–100), mencegah penumpukan laporan ganda (*Spatial Deduplication* radius < 50m), serta menyediakan pelacakan batas waktu penanganan (*SLA Countdown*) dengan verifikasi bukti foto *Before vs After*.
 
 ---
 
-## 🛠️ 2. Tech Stack yang Digunakan
+## 2. Arsitektur Repository (Clean Modular Monorepo)
 
-| Kategori | Teknologi | Keterangan Fungsional |
-| :--- | :--- | :--- |
-| **Frontend & UI** | HTML5, Tailwind CSS, JavaScript (ES6+), Vite | Antarmuka responsif (*Mobile & Desktop*) dengan sistem *12-Column Split Grid*. |
-| **Geospatial & Peta GIS** | Leaflet.js & OpenStreetMap | Visualisasi peta interaktif sebaran laporan di 16 kecamatan Kabupaten Toba. |
-| **AI Triage Engine** | Autonomous Triage Logic (Gemini API Ready) | Klasifikasi otomatis instansi (PUTR, Dishub, DLH, BPBD), kalkulasi *Urgency Score*, & deteksi duplikasi. |
-| **Icons & Typography** | Lucide Icons & Plus Jakarta Sans | Sistem ikon vektor & tipografi modern berketerbacaan tinggi. |
-| **Data & State Layer** | Single-Database Realtime State Sync (Supabase Ready) | Sinkronisasi status tiket lintas 3 POV (*Masyarakat, Admin Dinas, Petugas Lapangan*). |
+Project ini diorganisasikan secara modular menjadi 3 komponen utama (**Frontend**, **Backend**, dan **AI Agent**):
+
+```text
+tobapatrol/
+├── frontend/                         # Frontend Web App (Vite + Tailwind CSS + Leaflet GIS)
+│   ├── index.html                    # Antarmuka utama 4 Halaman (SPA View)
+│   ├── package.json                  # Konfigurasi Vite Frontend
+│   └── src/
+│       └── app.js                    # Controller UI, Peta GIS Kab. Toba, & State Sync 3 POV
+├── backend/                          # Backend API & Database Layer
+│   ├── server.js                     # REST API Server (/api/health, /api/triage)
+│   ├── package.json                  # Konfigurasi Backend Service
+│   └── database/
+│       └── schema.sql                # Skema Tabel PostgreSQL / Supabase (reports & report_logs)
+├── ai-agent/                         # Autonomous AI Triage & Spatial Deduplication Engine
+│   ├── triageEngine.js               # Auto-routing Dinas (PUTR/Dishub/DLH/BPBD) & Urgency Scoring
+│   ├── spatialDeduplicator.js        # Kalkulasi jarak Haversine (< 50m radius deduplication)
+│   └── package.json                  # Modul AI Agent
+├── package.json                      # Root Workspace Scripts
+└── README.md                         # Dokumentasi Utama Project
+```
 
 ---
 
-## 🚀 3. Cara Menjalankan Project (`Clone` ➔ `Install` ➔ `Run`)
+## 3. Tech Stack yang Digunakan
 
-Ikuti langkah-langkah berikut untuk menjalankan project **TobaPatrol** di komputer lokal Anda:
+* **Frontend (`frontend/`):** HTML5, Tailwind CSS, JavaScript Modular (ES6+), Vite, Leaflet.js & OpenStreetMap (GIS), Lucide Icons, Plus Jakarta Sans.
+* **Backend (`backend/`):** Node.js HTTP REST API, PostgreSQL / Supabase Database Schema (`reports` & `report_logs`).
+* **AI Engine (`ai-agent/`):** Autonomous Triage Classification Engine (Dinas Auto-Routing & Urgency Score 1–100) + Spatial Deduplication (Haversine Geolocation Check).
+
+---
+
+## 4. Cara Menjalankan Project (`Clone` ➔ `Install` ➔ `Run`)
 
 ```bash
 # 1. Clone repository ini
 git clone https://github.com/GraceTiodora/tobapatrol.git
 cd tobapatrol
 
-# 2. Install seluruh dependencies
+# 2. Install dependencies & jalankan Frontend Development Server
+cd frontend
 npm install
-
-# 3. Jalankan development server (Vite)
 npm run dev
+
+# (Opsional) Menjalankan Backend API Service di terminal terpisah
+cd ../backend
+npm run start
 ```
 
-* Setelah server berjalan, buka browser (Chrome/Edge/Firefox) dan akses alamat lokal yang muncul di terminal (umumnya `http://localhost:5173`).
-* **Alternatif Cepat Tanpa Build:** Anda juga dapat membuka file `index.html` secara langsung di browser atau melalui ekstensi *Live Server* di VS Code.
+Setelah server berjalan, buka browser dan akses `http://localhost:5173`.
 
 ---
 
-## ✅ 4. Progress Saat Ini (First Draft Submission — 01 November 2026)
+## 5. Progress Saat Ini (First Draft Submission)
 
-Seluruh alur utama **3 POV (Masyarakat, Admin Dinas, Petugas Lapangan)** pada MVP telah selesai dibangun dan berjalan secara interaktif:
-
-1. **Halaman 1 — Beranda & Peta Interaktif Kabupaten Toba (`/#home`):**
-   * *Hero Section* dengan pratinjau *Real-Time AI Triage* dan metrik ketuntasan SLA Kabupaten Toba.
-   * Ringkasan ekosistem 3 POV (*Masyarakat, Petugas Teknis, Admin Pemda*).
-   * **Peta Interaktif GIS (Leaflet.js)** yang menampilkan titik koordinat laporan aktif per kecamatan (*Balige, Ajibata, Porsea, Laguboti*) beserta *popup* navigasi langsung ke tiket.
-   * *Live Feed* daftar aduan masyarakat terbaru.
-2. **Halaman 2 — Buat Laporan Warga + AI Triage Agent (`/#lapor`):**
-   * 4 tombol *Preset Skenario Uji Coba Cepat* kasus nyata di Kabupaten Toba.
-   * Formulir pelaporan masyarakat dengan unggah bukti foto ber-*geotag* GPS.
-   * **Panel Analisis Real-Time AI Triage Agent** yang langsung menghitung *Skor Urgensi (1–100)*, menentukan *Dinas Tujuan Otomatis*, menetapkan *Target Waktu SLA*, serta mendeteksi laporan ganda dalam radius $< 50\text{ meter}$ (*Spatial Deduplication*).
-3. **Halaman 3 — Lacak Tiket & Transparansi SLA (`/#lacak`):**
-   * Pencarian Nomor Tiket (`#TP-2026-101`, `#TP-2026-102`, dst.) dan tombol *+1 Upvote Prioritas Warga*.
-   * Indikator *Countdown SLA* dan **Timeline Pelacakan 4 Tahap**.
-   * Panel perbandingan bukti visual kondisi awal (**Foto Before**) vs kondisi selesai diperbaiki (**Foto After**).
-4. **Halaman 4 — Portal Petugas & Admin Dinas (`/#dashboard`):**
-   * Banner rekomendasi kebijakan mingguan (*AI Decision Support Insight*) untuk Pemerintah Kabupaten Toba.
-   * Tabel antrean disposisi terurut berdasarkan *Skor Urgensi AI* tertinggi, dilengkapi tombol aksi interaktif **"Tugaskan Regu Petugas"** dan **"Upload Bukti & Selesaikan"** yang langsung memperbarui status di halaman publik secara *real-time*.
-
----
-
-## 📂 Struktur Folder Project
-
-```text
-tobapatrol/
-├── index.html                          # Entry point & 4 tampilan halaman utama (SPA View)
-├── src/
-│   └── app.js                          # Logika AI Triage, Leaflet GIS Map, & State Sync 3 POV
-├── Thumbnail_TobaPatrol_NAPOSO3M.png   # Banner 16:9 Showcase TobaPatrol
-├── package.json                        # Konfigurasi script Vite (dev, build, preview)
-└── README.md                           # Dokumentasi utama repository
-```
-
----
-
-## 👥 Tim Pengembang — **NAPOSO3M**
-Kompetisi **Web In Action (WIA) — Multimedia In Action (MIA) 2026**  
-*Diselenggarakan oleh KSM Multimedia UPN Veteran Jakarta*
+1. **Halaman 1 — Beranda & Peta GIS Publik (`/#home`):** Hero section, metrik ketuntasan SLA Kabupaten Toba, overview 3 POV, Peta Interaktif Leaflet.js 16 Kecamatan, dan daftar laporan terbaru.
+2. **Halaman 2 — Buat Laporan + AI Triage (`/#lapor`):** Formulir pengaduan warga dengan analisis otomatis *AI Triage Agent* (Dinas Tujuan, Skor Urgensi 1–100, Target SLA, & Deteksi Duplikasi Spasial < 50m).
+3. **Halaman 3 — Lacak Tiket & Transparansi SLA (`/#lacak`):** Pencarian Nomor Tiket (`#TP-2026-101`), tombol *+1 Upvote Warga*, *Countdown SLA*, Timeline 4 tahap, dan perbandingan foto *Before vs After*.
+4. **Halaman 4 — Portal Petugas & Admin Dinas (`/#dashboard`):** Rekomendasi kebijakan mingguan (*AI Decision Support Insight*) untuk Pemkab Toba serta tabel disposisi interaktif lintas peran.

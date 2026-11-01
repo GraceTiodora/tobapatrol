@@ -1,15 +1,16 @@
 {
-  "name": "tobapatrol-naposo3m",
+  "name": "tobapatrol",
   "private": true,
-  "version": "0.1.0",
-  "description": "TobaPatrol - Platform Pelaporan Masyarakat & Pelacakan Layanan Publik Kabupaten Toba Berbasis AI Agent (Tim NAPOSO3M)",
-  "type": "module",
+  "version": "1.0.0",
+  "description": "TobaPatrol Monorepo — Smart Civic Reporting & Public Service Tracking (Tim NAPOSO3M)",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "ai-agent"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "devDependencies": {
-    "vite": "^5.4.0"
+    "dev": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "build": "npm --prefix frontend run build"
   }
 }

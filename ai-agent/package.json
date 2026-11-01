@@ -1,0 +1,7 @@
+{
+  "name": "@tobapatrol/ai-agent",
+  "version": "1.0.0",
+  "description": "Autonomous AI Triage & Spatial Deduplication Engine for TobaPatrol",
+  "type": "module",
+  "main": "triageEngine.js"
+}

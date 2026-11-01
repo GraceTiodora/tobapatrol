@@ -1,0 +1,15 @@
+{
+  "name": "@tobapatrol/frontend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Frontend Web Application for TobaPatrol (Vite + Tailwind CSS + Leaflet GIS)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

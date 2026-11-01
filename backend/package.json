@@ -1,0 +1,11 @@
+{
+  "name": "@tobapatrol/backend",
+  "version": "1.0.0",
+  "description": "Backend API & Database Layer for TobaPatrol",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  }
+}

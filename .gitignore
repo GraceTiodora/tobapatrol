@@ -1,16 +1,17 @@
-# Dependencies
+# Dependencies & Build
 node_modules/
 dist/
 .vite/
 
-# Local env files
+# Environment
 .env
 .env.local
 
-# Word draft documents (kept locally, excluded from source repo)
+# Local Drafts & Generated Media (not tracked in repository)
 *.docx
 ~$*.docx
+Thumbnail_TobaPatrol_NAPOSO3M.png
 
-# OS generated files
+# OS
 .DS_Store
 Thumbs.db
