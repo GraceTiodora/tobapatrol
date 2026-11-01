@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TobaPatrol — Smart Civic Reporting & Public Service Tracking Kabupaten Toba</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS & JS for Interactive Map of Toba -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            toba: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    #tobaMap { height: 420px; width: 100%; border-radius: 1rem; z-index: 10; }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+  <!-- TOP ANNOUNCEMENT BANNER -->
+  <div class="bg-slate-900 text-slate-200 text-xs py-2 px-4 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          AI Agent Online
+        </span>
+        <span>Pilot Project Smart Governance Kabupaten Toba — <strong>Tim NAPOSO3M (MIA 2026)</strong></span>
+      </div>
+      <div class="flex items-center gap-4 text-slate-400">
+        <span>Subtema: Civic Reporting & Public Service Tracking</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVBAR -->
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Brand -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('home')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-sky-600/20">
+          <i data-lucide="shield-check" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-xl tracking-tight text-slate-900">Toba<span class="text-sky-600">Patrol</span></span>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-sky-100 text-sky-700 rounded-md">AI Agent</span>
+          </div>
+          <p class="text-[11px] text-slate-500 -mt-0.5">Civic Reporting & Service Tracker Kab. Toba</p>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="hidden md:flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+        <button id="nav-home" onclick="switchTab('home')" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-sky-700 shadow-sm">
+          1. Beranda & Peta
+        </button>
+        <button id="nav-lapor" onclick="switchTab('lapor')" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
+          2. Lapor + AI Triage
+        </button>
+        <button id="nav-lacak" onclick="switchTab('lacak')" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
+          3. Lacak Tiket (SLA)
+        </button>
+        <button id="nav-dashboard" onclick="switchTab('dashboard')" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
+          4. Portal Petugas & Admin
+        </button>
+      </nav>
+
+      <!-- CTA Button -->
+      <div class="flex items-center gap-2">
+        <button onclick="switchTab('lapor')" class="bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm shadow-sky-600/20 flex items-center gap-2 transition">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Buat Laporan Cepat</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Nav -->
+    <div class="md:hidden flex overflow-x-auto border-t border-slate-100 px-3 py-2 gap-2 bg-slate-50">
+      <button onclick="switchTab('home')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-slate-200 whitespace-nowrap">Beranda</button>
+      <button onclick="switchTab('lapor')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-slate-200 whitespace-nowrap">Lapor AI</button>
+      <button onclick="switchTab('lacak')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-slate-200 whitespace-nowrap">Lacak Tiket</button>
+      <button onclick="switchTab('dashboard')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-slate-200 whitespace-nowrap">Dashboard Dinas</button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-grow">
+
+    <!-- ==========================================
+         VIEW 1: LANDING PAGE (BERANDA & PETA TOBA)
+         ========================================== -->
+    <section id="view-home" class="space-y-12 pb-16">
+      <!-- Hero Section -->
+      <div class="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-sky-950 text-white pt-12 pb-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div class="grid lg:grid-cols-12 gap-10 items-center">
+            <div class="lg:col-span-7 space-y-6">
+              <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-500/15 border border-sky-400/30 text-sky-300 text-xs font-semibold">
+                <i data-lucide="cpu" class="w-4 h-4"></i>
+                <span>Autonomous Civic Triage & Spatial Deduplication Engine</span>
+              </div>
+              <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">
+                Dari Keluhan Warga Menjadi <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-emerald-400">Aksi Nyata</span> Tanpa Birokrasi Berbelit.
+              </h1>
+              <p class="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl">
+                <strong>TobaPatrol</strong> menghubungkan masyarakat Kabupaten Toba, petugas lapangan, dan pemerintah daerah dalam satu ekosistem transparan. Cukup unggah foto & keluhan—<strong>AI Agent</strong> kami otomatis memvalidasi bukti, mencegah laporan ganda, dan mengawal batas waktu (SLA) perbaikan.
+              </p>
+              <div class="flex flex-wrap gap-3 pt-2">
+                <button onclick="switchTab('lapor')" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-6 py-3.5 rounded-xl shadow-lg shadow-sky-500/25 flex items-center gap-2 transition">
+                  <i data-lucide="camera" class="w-5 h-5"></i>
+                  <span>Lapor Masalah Sekarang</span>
+                </button>
+                <button onclick="switchTab('lacak')" class="bg-white/10 hover:bg-white/15 text-white font-semibold px-6 py-3.5 rounded-xl border border-white/15 flex items-center gap-2 transition">
+                  <i data-lucide="search" class="w-5 h-5"></i>
+                  <span>Lacak Nomor Tiket</span>
+                </button>
+              </div>
+
+              <!-- Quick Trust Metrics -->
+              <div class="grid grid-cols-3 gap-4 pt-6 border-t border-slate-800">
+                <div>
+                  <div class="text-2xl sm:text-3xl font-extrabold text-white">2.4 Detik</div>
+                  <div class="text-xs text-slate-400">Kecepatan Disposisi AI Agent</div>
+                </div>
+                <div>
+                  <div class="text-2xl sm:text-3xl font-extrabold text-emerald-400">94.8%</div>
+                  <div class="text-xs text-slate-400">Laporan Tuntas Sesuai SLA</div>
+                </div>
+                <div>
+                  <div class="text-2xl sm:text-3xl font-extrabold text-sky-400">16 Kec.</div>
+                  <div class="text-xs text-slate-400">Wilayah Kabupaten Toba</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Hero Preview Card: Live AI Triage Simulation Card -->
+            <div class="lg:col-span-5">
+              <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-5 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                    <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                    <span class="text-xs font-mono text-slate-400 ml-2">tobapatrol-ai-agent.v1</span>
+                  </div>
+                  <span class="text-[11px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full font-semibold">Real-Time Triage</span>
+                </div>
+
+                <!-- Sample Incoming Report -->
+                <div class="bg-slate-900/90 rounded-xl p-3.5 border border-slate-700/80 space-y-2">
+                  <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span>📍 Kec. Balige (Jl. Bypass Tambunan)</span>
+                    <span>Baru saja</span>
+                  </div>
+                  <p class="text-sm text-slate-200 font-medium">"Lubang jalan cukup dalam di dekat persimpangan pasar, rawan kecelakaan motor saat malam karena minim lampu."</p>
+                </div>
+
+                <!-- AI Agent Output Box -->
+                <div class="bg-sky-950/60 border border-sky-500/30 rounded-xl p-4 space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+                      <i data-lucide="bot" class="w-4 h-4"></i> Hasil Analisis AI Agent
+                    </span>
+                    <span class="text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-md">
+                      Urgensi: 88/100 (DARURAT)
+                    </span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-slate-900/70 p-2.5 rounded-lg">
+                      <span class="text-slate-400 block">Disposisi Instansi:</span>
+                      <span class="font-semibold text-white">Dinas PUTR Kab. Toba</span>
+                    </div>
+                    <div class="bg-slate-900/70 p-2.5 rounded-lg">
+                      <span class="text-slate-400 block">Batas Waktu SLA:</span>
+                      <span class="font-semibold text-amber-300">Maks. 1 x 24 Jam</span>
+                    </div>
+                  </div>
+                  <div class="text-xs bg-amber-500/10 border border-amber-500/30 text-amber-200 p-2.5 rounded-lg flex items-start gap-2">
+                    <i data-lucide="git-merge" class="w-4 h-4 shrink-0 mt-0.5 text-amber-400"></i>
+                    <span><strong>Spatial Deduplication:</strong> Terdeteksi 3 laporan warga lain dalam radius 35m. Otomatis digabungkan ke Tiket Utama <strong>#TP-2026-101</strong> (+4 Upvote).</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 POV Architecture Section -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-10">
+          <span class="text-xs font-bold uppercase tracking-wider text-sky-600 bg-sky-50 px-3 py-1 rounded-full">Ekosistem Terintegrasi 3 POV</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">Satu Database Terpadu untuk Seluruh Pemangku Kepentingan</h2>
+          <p class="text-slate-600 text-sm sm:text-base mt-2">Menghilangkan kesenjangan informasi antara warga pelapor, tim teknis di lapangan, dan pengambil kebijakan di Kabupaten Toba.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- POV 1 -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition">
+            <div class="w-12 h-12 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center mb-4">
+              <i data-lucide="users" class="w-6 h-6"></i>
+            </div>
+            <div class="text-xs font-bold text-sky-600 uppercase">POV 1 • Masyarakat</div>
+            <h3 class="text-lg font-bold text-slate-900 mt-1">Pelaporan Tanpa Friksi & Lacak SLA</h3>
+            <p class="text-sm text-slate-600 mt-2">Warga cukup memotret kerusakan fasilitas umum dan mengetik keluhan singkat tanpa pusing memilih kategori dinas. Warga langsung mendapat nomor tiket dan memantau *countdown* SLA.</p>
+          </div>
+
+          <!-- POV 2 -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition">
+            <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mb-4">
+              <i data-lucide="hard-hat" class="w-6 h-6"></i>
+            </div>
+            <div class="text-xs font-bold text-amber-600 uppercase">POV 2 • Petugas Lapangan</div>
+            <h3 class="text-lg font-bold text-slate-900 mt-1">Penugasan Terukur & Bukti Visual</h3>
+            <p class="text-sm text-slate-600 mt-2">Petugas menerima daftar tugas harian yang sudah diurutkan berdasarkan *Urgency Score* tertinggi lengkap dengan titik GPS, serta mengunggah bukti foto penyelesaian (*Before-After*).</p>
+          </div>
+
+          <!-- POV 3 -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition">
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4">
+              <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+            </div>
+            <div class="text-xs font-bold text-emerald-600 uppercase">POV 3 • Admin & Pemda Toba</div>
+            <h3 class="text-lg font-bold text-slate-900 mt-1">Decision Support & Audit Kinerja</h3>
+            <p class="text-sm text-slate-600 mt-2">Dashboard analitik pemetaan titik rawan kerusakan infrastruktur antar kecamatan di Kabupaten Toba untuk membantu perencanaan prioritas anggaran berbasis data.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Map & Public Reports Feed -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-5 h-5 text-sky-600"></i>
+                <span>Peta Sebaran Laporan Publik Kabupaten Toba (Real-Time GIS)</span>
+              </h2>
+              <p class="text-sm text-slate-500">Klik titik marker pada peta untuk melihat detail tiket laporan, skor urgensi AI, dan status penanganannya.</p>
+            </div>
+            <div class="flex items-center gap-3 text-xs font-semibold">
+              <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Darurat (SLA 24J)
+              </span>
+              <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Sedang Diproses
+              </span>
+              <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Selesai Diperbaiki
+              </span>
+            </div>
+          </div>
+
+          <div class="grid lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7">
+              <div id="tobaMap" class="border border-slate-200 shadow-inner"></div>
+            </div>
+            <div class="lg:col-span-5 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Laporan Terbaru Warga Toba</h3>
+                  <span id="total-reports-badge" class="text-xs bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-semibold">4 Tiket Aktif</span>
+                </div>
+                <div id="home-reports-list" class="space-y-3 max-h-[340px] overflow-y-auto pr-1">
+                  <!-- Populated dynamically by app.js -->
+                </div>
+              </div>
+              <div class="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between">
+                <span class="text-xs text-slate-500">Menemukan kerusakan fasilitas umum di sekitar Anda?</span>
+                <button onclick="switchTab('lapor')" class="text-xs font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1">
+                  <span>Kirim Laporan Baru</span>
+                  <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 2: LAPOR + AI TRIAGE WORKSPACE
+         ========================================== -->
+    <section id="view-lapor" class="hidden py-10">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+          <span class="text-xs font-bold uppercase tracking-wider text-sky-600 bg-sky-100 px-3 py-1 rounded-full">Halaman Fitur Utama 1 • Smart Civic Reporting</span>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">Buat Laporan Warga dengan AI Triage Agent</h1>
+          <p class="text-slate-600 text-sm sm:text-base mt-1">Tidak perlu bingung memilih dinas. Cukup ceritakan masalah atau pilih skenario uji coba di bawah, dan biarkan AI Agent menganalisisnya secara instan.</p>
+        </div>
+
+        <!-- Quick Demo Preset Buttons for Jury / Mentor -->
+        <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4 mb-8">
+          <div class="text-xs font-bold text-sky-800 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <i data-lucide="zap" class="w-4 h-4 text-sky-600"></i>
+            <span>Uji Coba Cepat (Klik Salah Satu Skenario untuk Mengisi Otomatis):</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="fillPreset('jalan')" class="text-xs bg-white hover:bg-sky-600 hover:text-white text-slate-700 font-semibold px-3.5 py-2 rounded-xl border border-sky-200 shadow-sm transition">
+              🕳️ Skenario 1: Jalan Amblas Bypass Balige (Cek Duplikasi Spasial)
+            </button>
+            <button type="button" onclick="fillPreset('lampu')" class="text-xs bg-white hover:bg-sky-600 hover:text-white text-slate-700 font-semibold px-3.5 py-2 rounded-xl border border-sky-200 shadow-sm transition">
+              💡 Skenario 2: Lampu PJU Mati di Dermaga Wisata Ajibata
+            </button>
+            <button type="button" onclick="fillPreset('sampah')" class="text-xs bg-white hover:bg-sky-600 hover:text-white text-slate-700 font-semibold px-3.5 py-2 rounded-xl border border-sky-200 shadow-sm transition">
+              🗑️ Skenario 3: Tumpukan Sampah Pasar Porsea
+            </button>
+            <button type="button" onclick="fillPreset('longsor')" class="text-xs bg-white hover:bg-sky-600 hover:text-white text-slate-700 font-semibold px-3.5 py-2 rounded-xl border border-sky-200 shadow-sm transition">
+              ⚠️ Skenario 4: Bahu Jalan Retak Rawan Longsor Habinsaran
+            </button>
+          </div>
+        </div>
+
+        <div class="grid lg:grid-cols-12 gap-8 items-start">
+          <!-- Form Column -->
+          <form id="report-form" onsubmit="handleReportSubmit(event)" class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Nama Pelapor (Atau Anonim)</label>
+                <input id="input-nama" type="text" required value="Budi Napitupulu" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Nomor WhatsApp (Notifikasi Tiket)</label>
+                <input id="input-wa" type="text" required value="0813-7721-9045" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+              </div>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Kecamatan di Kabupaten Toba</label>
+                <select id="input-kecamatan" onchange="runLiveAITriage()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white">
+                  <option value="Balige">Kecamatan Balige</option>
+                  <option value="Porsea">Kecamatan Porsea</option>
+                  <option value="Laguboti">Kecamatan Laguboti</option>
+                  <option value="Ajibata">Kecamatan Ajibata</option>
+                  <option value="Habinsaran">Kecamatan Habinsaran</option>
+                  <option value="Lumban Julu">Kecamatan Lumban Julu</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Detail Lokasi / Patokan Jalan</label>
+                <input id="input-lokasi" type="text" required oninput="runLiveAITriage()" value="Jl. Bypass Balige KM 2 (Dekat Simpang Tambunan)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Deskripsi Keluhan (Bahasa Sehari-hari)</label>
+              <textarea id="input-deskripsi" rows="4" required oninput="runLiveAITriage()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" placeholder="Ceritakan kondisi masalah di lokasi...">Ada lubang jalan besar dan aspal amblas sedalam 20 cm di jalur cepat Bypass Balige. Tadi malam sudah ada pengendara motor yang hampir jatuh karena tidak terlihat saat hujan.</textarea>
+            </div>
+
+            <!-- Simulated Photo Upload -->
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Unggah Foto Bukti Lapangan (AI Vision Verification)</label>
+              <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer">
+                <input type="file" id="input-foto" accept="image/*" class="hidden" onchange="previewImage(event)" />
+                <label for="input-foto" class="cursor-pointer flex flex-col items-center">
+                  <i data-lucide="image-plus" class="w-8 h-8 text-sky-600 mb-1"></i>
+                  <span id="foto-label" class="text-xs font-semibold text-slate-700">bukti_jalan_amblas_balige.jpg (Terverifikasi Geotag GPS: 2.3324° N, 99.0681° E)</span>
+                  <span class="text-[11px] text-slate-500 mt-0.5">Klik untuk mengganti foto bukti lapangan</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="pt-2 flex items-center justify-end gap-3">
+              <button type="button" onclick="runLiveAITriage()" class="px-4 py-3 rounded-xl border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-100 flex items-center gap-2">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                <span>Analisis Ulang AI</span>
+              </button>
+              <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white font-bold px-6 py-3 rounded-xl shadow-md shadow-sky-600/20 flex items-center gap-2 transition">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                <span>Kirim Laporan & Terbitkan Tiket</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- AI Agent Live Triage Panel -->
+          <div class="lg:col-span-5 space-y-5">
+            <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-xl border border-slate-800 space-y-5">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-400">
+                    <i data-lucide="bot" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-sm">TobaPatrol AI Triage Agent</h3>
+                    <p class="text-[11px] text-slate-400">Klasifikasi Otomatis & Deteksi Duplikasi</p>
+                  </div>
+                </div>
+                <span class="text-[11px] px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold">Aktif</span>
+              </div>
+
+              <!-- Dynamic Triage Output -->
+              <div class="space-y-4">
+                <div class="flex items-center justify-between bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                  <div>
+                    <span class="text-xs text-slate-400 block">Skor Urgensi & Risiko Keselamatan</span>
+                    <span id="ai-urgency-label" class="text-lg font-extrabold text-rose-400">89 / 100 — DARURAT</span>
+                  </div>
+                  <div id="ai-urgency-badge" class="w-12 h-12 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-300 font-extrabold text-lg">
+                    89
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                  <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/80">
+                    <span class="text-slate-400 block mb-1">Disposisi Dinas Otomatis:</span>
+                    <span id="ai-dinas" class="font-bold text-sky-300 text-sm">Dinas PUTR Kab. Toba</span>
+                  </div>
+                  <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/80">
+                    <span class="text-slate-400 block mb-1">Target SLA Penanganan:</span>
+                    <span id="ai-sla" class="font-bold text-amber-300 text-sm">Maks. 1 x 24 Jam</span>
+                  </div>
+                </div>
+
+                <div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/80 space-y-1.5">
+                  <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <i data-lucide="scan-eye" class="w-4 h-4 text-sky-400"></i>
+                    <span>Alasan Keputusan AI (AI Reasoning):</span>
+                  </span>
+                  <p id="ai-reasoning" class="text-xs text-slate-300 leading-relaxed">
+                    Terdeteksi kata kunci kerusakan struktur jalan ("lubang jalan", "amblas") dengan potensi kecelakaan lalu lintas tinggi. Diprioritaskan ke Regu Reaksi Cepat Dinas PUTR.
+                  </p>
+                </div>
+
+                <!-- Spatial Deduplication Box -->
+                <div id="ai-dedup-box" class="bg-amber-500/15 border border-amber-500/40 rounded-xl p-3.5 text-xs text-amber-200 space-y-1">
+                  <div class="font-bold text-amber-300 flex items-center gap-1.5">
+                    <i data-lucide="git-merge" class="w-4 h-4"></i>
+                    <span>Deteksi Radius Geospasial (< 50 Meter):</span>
+                  </div>
+                  <p id="ai-dedup-text">
+                    Ditemukan 1 tiket aktif (<strong>#TP-2026-101</strong>) di titik koordinat yang sama oleh 3 warga lain. Laporan Anda akan otomatis memperkuat prioritas tiket tersebut (+1 Upvote) sekaligus memberi Anda kode pantau!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 3: LACAK TIKET & TRANSPARANSI SLA
+         ========================================== -->
+    <section id="view-lacak" class="hidden py-10">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">Halaman Fitur Utama 2 • Public Service Tracking</span>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">Pelacakan Progres Laporan & Akuntabilitas SLA</h1>
+          <p class="text-slate-600 text-sm sm:text-base mt-1">Transparansi penuh dari saat laporan dikirim hingga petugas mengunggah foto bukti perbaikan selesai.</p>
+        </div>
+
+        <!-- Search Bar + Quick Ticket Selector -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-grow">
+              <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-3.5 top-3"></i>
+              <input id="track-input" type="text" value="TP-2026-101" placeholder="Masukkan Nomor Tiket (contoh: TP-2026-101)" class="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            </div>
+            <button onclick="searchTicket()" class="bg-sky-600 hover:bg-sky-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition">
+              Lacak Status Tiket
+            </button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="text-slate-500 font-medium">Klik Contoh Tiket Aktif:</span>
+            <div id="quick-ticket-pills" class="flex flex-wrap gap-2">
+              <!-- Populated by app.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Ticket Detail Card -->
+        <div id="ticket-detail-container" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 4: DASHBOARD PETUGAS & ADMIN PEMDA
+         ========================================== -->
+    <section id="view-dashboard" class="hidden py-10">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full">Halaman Fitur Utama 3 • Multi-Role Governance Portal</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">Dashboard Tindak Lanjut Petugas & Admin Pemda Toba</h1>
+            <p class="text-slate-600 text-sm">Ubah status laporan pada tabel di bawah untuk melihat sinkronisasi langsung (*real-time*) ke halaman Pelacakan Warga.</p>
+          </div>
+
+          <!-- Role Switcher Indicator -->
+          <div class="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3 shadow-sm">
+            <div class="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+              <i data-lucide="user-check" class="w-5 h-5"></i>
+            </div>
+            <div class="text-xs">
+              <span class="text-slate-400 block">Mode Akses Saat Ini:</span>
+              <span class="font-bold text-slate-900">Supervisor Dinas & Petugas Lapangan</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Decision Support Insight Banner for Pemda -->
+        <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl p-6 shadow-lg border border-indigo-500/30">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="space-y-1.5 max-w-3xl">
+              <div class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-sky-400">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <span>AI Decision Support Insight • Rekomendasi Mingguan Pemkab Toba</span>
+              </div>
+              <h3 class="text-lg font-bold">Prioritas Pemeliharaan Infrastruktur: Kecamatan Balige & Porsea</h3>
+              <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Berdasarkan agregasi laporan masyarakat minggu ini, <strong>62% aduan darurat</strong> berfokus pada kerusakan jalan & drainase di jalur utama Balige–Porsea akibat curah hujan tinggi. Disarankan pengalihan 1 regu tambahan Dinas PUTR sebelum akhir pekan.
+              </p>
+            </div>
+            <div class="shrink-0 flex gap-3">
+              <div class="bg-white/10 border border-white/15 rounded-xl p-3 text-center min-w-[110px]">
+                <span class="text-2xl font-extrabold text-amber-300" id="dash-stat-pending">3</span>
+                <span class="text-[11px] text-slate-300 block">Dalam Antrean/Proses</span>
+              </div>
+              <div class="bg-white/10 border border-white/15 rounded-xl p-3 text-center min-w-[110px]">
+                <span class="text-2xl font-extrabold text-emerald-400" id="dash-stat-done">1</span>
+                <span class="text-[11px] text-slate-300 block">Selesai Ditangani</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Task Management Table -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
+            <h3 class="font-bold text-slate-900">Daftar Antrean Tiket Disposisi (Terurut Berdasarkan Skor Urgensi AI)</h3>
+            <span class="text-xs text-slate-500">Klik tombol aksi untuk memperbarui progres penanganan</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 text-slate-600 text-xs uppercase border-b border-slate-200">
+                  <th class="py-3.5 px-4 font-bold">No. Tiket</th>
+                  <th class="py-3.5 px-4 font-bold">Lokasi & Keluhan</th>
+                  <th class="py-3.5 px-4 font-bold">Dinas Tujuan (AI)</th>
+                  <th class="py-3.5 px-4 font-bold">Skor Urgensi</th>
+                  <th class="py-3.5 px-4 font-bold">Status Saat Ini</th>
+                  <th class="py-3.5 px-4 font-bold text-right">Aksi Petugas / Admin</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-table-body" class="divide-y divide-slate-200 text-sm">
+                <!-- Populated dynamically by app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-white">TobaPatrol AI</span>
+        <span>— Dikembangkan oleh <strong>Tim NAPOSO3M</strong> untuk Web In Action (MIA 2026)</span>
+      </div>
+      <div>
+        <span>Tema: "From Visionaries to Architects of Change"</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 max-w-md">
+    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+      <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+    </div>
+    <div class="text-xs">
+      <div id="toast-title" class="font-bold text-sm text-white">Berhasil!</div>
+      <div id="toast-msg" class="text-slate-300">Tiket berhasil diterbitkan.</div>
+    </div>
+  </div>
+
+  <script src="./src/app.js"></script>
+</body>
+</html>
