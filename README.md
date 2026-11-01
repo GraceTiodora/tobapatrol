@@ -32,7 +32,7 @@ Ikuti langkah-langkah berikut untuk menjalankan project **TobaPatrol** di komput
 
 ```bash
 # 1. Clone repository ini
-git clone https://github.com/NAPOSO3M/tobapatrol.git
+git clone https://github.com/GraceTiodora/tobapatrol.git
 cd tobapatrol
 
 # 2. Install seluruh dependencies
